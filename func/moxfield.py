@@ -221,7 +221,7 @@ def moxfield_api_request(api_url: str) -> dict:
     # DON'T MAKE TOO MANY API CALLS PER SECOND PLS
     time.sleep(1)
     moxfield_response = requests.get(
-        headers={'User-Agent': 'aetheriumslinky/0.0.0'},
+        headers={'User-Agent': 'LandsAndColoursTool/0.1.0'},
         url=api_url).text
     json_file = json.loads(moxfield_response)
     return json_file
