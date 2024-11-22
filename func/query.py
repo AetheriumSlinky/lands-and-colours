@@ -25,8 +25,13 @@ def query():
 
         try:
             deck_json = moxfield_api_request(parse_moxfield_url(url=url))
-        except Exception:
-            print("Invalid deck link, deck set to private, connection error or some other problem. Try again.")
+        except AttributeError as e:
+            print(e)
+            print("Skipping to first prompt.")
+            continue
+        except ConnectionError as e:
+            print(e)
+            print("Skipping to first prompt.")
             continue
 
         custom = input("Do you want a custom mana target? Default: commander mana cost is used. Y/N ")
@@ -102,9 +107,19 @@ def query():
 
         elif mode == 'turns':
             if mt_flag:
-                t_results = simulate_turns(iterations=1000, deck_json=deck_json, override_mt=mt)
+                try:
+                    t_results = simulate_turns(iterations=1000, deck_json=deck_json, override_mt=mt)
+                except RuntimeError as e:
+                    print(e)
+                    print("Skipping to first prompt.")
+                    continue
             else:
-                t_results = simulate_turns(iterations=1000, deck_json=deck_json, account_generic=False)
+                try:
+                    t_results = simulate_turns(iterations=1000, deck_json=deck_json, account_generic=False)
+                except RuntimeError as e:
+                    print(e)
+                    print("Skipping to first prompt.")
+                    continue
 
             if len(t_results['names']) == 2:
                 cmdr_names = f'''{t_results['names'][0]} and {t_results['names'][1]}'''
@@ -127,11 +142,21 @@ def query():
 
         elif mode == 'both':
             if mt_flag:
-                p_results = simulate_probability(iterations=1000, deck_json=deck_json, override_mt=mt)
-                t_results = simulate_turns(iterations=1000, deck_json=deck_json, override_mt=mt)
+                try:
+                    p_results = simulate_probability(iterations=1000, deck_json=deck_json, override_mt=mt)
+                    t_results = simulate_turns(iterations=1000, deck_json=deck_json, override_mt=mt)
+                except RuntimeError as e:
+                    print(e)
+                    print("Skipping to first prompt.")
+                    continue
             else:
-                p_results = simulate_probability(iterations=1000, deck_json=deck_json, account_generic=False)
-                t_results = simulate_turns(iterations=1000, deck_json=deck_json, account_generic=False)
+                try:
+                    p_results = simulate_probability(iterations=1000, deck_json=deck_json, account_generic=False)
+                    t_results = simulate_turns(iterations=1000, deck_json=deck_json, account_generic=False)
+                except RuntimeError as e:
+                    print(e)
+                    print("Skipping to first prompt.")
+                    continue
 
             if len(p_results['names']) == 2:
                 cmdr_names = f'''{p_results['names'][0]} and {p_results['names'][1]}'''

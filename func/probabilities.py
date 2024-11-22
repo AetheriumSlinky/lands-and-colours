@@ -74,11 +74,15 @@ def simulate_turns(iterations: int, deck_json: dict,
         hand = deepcopy(start_hand)
         target = deepcopy(mana_target)
         draw_count = 0
+
         while not hand.success(target, account_generic):
             draw = random.choice(deck.cards)
             deck.remove_card(draw)
             hand.add_card(draw)
             draw_count += 1
+            if draw_count > 50:
+                raise RuntimeError("Your simulation has drawn more than 50 cards. "
+                                   "Are you sure you have enough lands that can produce appropriate colours?")
         turn_counts.append(draw_count - 7)
 
     return {'names': commander_names, 'turns': (sum(turn_counts) / iterations), 'mana_target': mana_target}

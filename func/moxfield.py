@@ -223,6 +223,8 @@ def parse_moxfield_url(url: str) -> str:
     :param url: Regular deck url.
     :return: API call url.
     """
+    if 'moxfield' not in url:
+        raise AttributeError("Not a Moxfield link. Try Again.")
     deck_id = url[url.find('decks/') + len('decks/'):]
     return f'https://api.moxfield.com/v2/decks/all/{deck_id}'
 
@@ -235,8 +237,17 @@ def moxfield_api_request(api_url: str) -> dict:
     """
     # DON'T MAKE TOO MANY API CALLS PER SECOND PLS
     time.sleep(1)
-    moxfield_response = requests.get(
-        headers={'User-Agent': 'LandsAndColoursTool/0.1.0'},
-        url=api_url).text
-    json_file = json.loads(moxfield_response)
-    return json_file
+    try:
+        moxfield_response = requests.get(
+            headers={'User-Agent': 'LandsAndColoursTool/0.1.0'},
+            url=api_url).text
+        json_file = json.loads(moxfield_response)
+        try:
+            if json_file['name']:
+                return json_file
+        except KeyError:
+            raise AttributeError("Your deck is probably set to private or deck not found.")
+
+    except ConnectionError as e:
+        raise ConnectionError(f"Connection error. Here's the error code: {e}")
+
