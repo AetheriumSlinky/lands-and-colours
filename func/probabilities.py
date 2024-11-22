@@ -24,7 +24,7 @@ def simulate_probability(iterations: int, deck_json: dict,
     if override_mt:
         mana_target = override_mt
     else:
-        mana_target = start_deck.target
+        mana_target = decklist.get_mana_target()
     draws = mana_target.total_mana() + 7
 
     commander_names = []
@@ -34,12 +34,13 @@ def simulate_probability(iterations: int, deck_json: dict,
     for _ in range(0, iterations):
         deck = deepcopy(start_deck)
         hand = deepcopy(start_hand)
+        target = deepcopy(mana_target)
         for _ in range(0, draws):
             draw = random.choice(deck.cards)
             deck.remove_card(draw)
             hand.add_card(draw)
 
-        if hand.success(mana_target, account_generic):
+        if hand.success(target, account_generic):
             successes += 1
 
     return {'names': commander_names, 'probability': (successes / iterations), 'mana_target': mana_target}
@@ -62,7 +63,7 @@ def simulate_turns(iterations: int, deck_json: dict,
     if override_mt:
         mana_target = override_mt
     else:
-        mana_target = start_deck.target
+        mana_target = decklist.get_mana_target()
 
     commander_names = []
     for commander_card in decklist.commanders:
@@ -71,8 +72,9 @@ def simulate_turns(iterations: int, deck_json: dict,
     for _ in range(0, iterations):
         deck = deepcopy(start_deck)
         hand = deepcopy(start_hand)
+        target = deepcopy(mana_target)
         draw_count = 0
-        while not hand.success(mana_target, account_generic):
+        while not hand.success(target, account_generic):
             draw = random.choice(deck.cards)
             deck.remove_card(draw)
             hand.add_card(draw)

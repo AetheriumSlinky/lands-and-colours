@@ -43,6 +43,14 @@ class Card:
         self.mana_value = 0
         self.mana_cost = {'w': 0, 'u': 0, 'b': 0, 'r': 0, 'g': 0, 'c': 0, 'a': 0}
 
+        # These are for lands producing mana
+        self.w = 0
+        self.u = 0
+        self.b = 0
+        self.r = 0
+        self.g = 0
+        self.c = 0
+
     def __str__(self):
         return f"Attributes: {self.__dict__}"
 
@@ -55,14 +63,8 @@ class Card:
 
             self.name = self.card_json['name']
 
-            # Start checking for card types
-            # Basic Lands are lands and their identity is straight up JSON identity
-            if 'Basic Land' in self.card_json['type_line']:
-                self.colour_identity = ''.join(self.card_json['color_identity']).lower()
-                self.card_category = 'land'
-
             # If the card is an MDFC just... ignore it, kinda - it's a nonland
-            elif '//' in self.card_json['type_line']:
+            if '//' in self.card_json['type_line']:
                 self.colour_identity = ''.join(self.card_json['color_identity']).lower()
                 self.card_category = 'nonland'
 
@@ -70,21 +72,27 @@ class Card:
             elif 'Land' in self.card_json['type_line']:
                 self.card_category = 'land'
 
-                # If the land can many any colour regardless of restrictions we classify it as 'wubrg'
-                if 'any color' in self.card_json['oracle_text']:
+                # If the oracle text contains keywords for any colour or a fetch set identity to wubrg
+                if 'any color' in self.card_json['oracle_text'] or 'acrifice' in self.card_json['oracle_text']:
                     self.colour_identity = 'wubrg'
-
-                # Lazy-ish solution for fetches
-                elif 'acrifice' in self.card_json['oracle_text']:
-                    self.colour_identity = 'wubrg'
+                    for colour_key in self.colour_identity:
+                        self.__setattr__(colour_key, 1)
 
                 # If the JSON identity is empty we assume the land can produce colourless mana (cue Maze of Ith...)
                 elif ''.join(self.card_json['color_identity']) == '':
                     self.colour_identity = 'c'
+                    self.c = 1
+
+                elif 'Basic' in self.card_json['type_line']:
+                    self.colour_identity = ''.join(self.card_json['color_identity']).lower()
+                    for colour_key in self.colour_identity:
+                        self.__setattr__(colour_key, 1)
 
                 # Catch all other identities such as duals
                 else:
                     self.colour_identity = ''.join(self.card_json['color_identity']).lower()
+                    for colour_key in self.colour_identity:
+                        self.__setattr__(colour_key, 1)
 
             # Catch nonlands
             else:
@@ -107,6 +115,7 @@ class Card:
                         self.mana_cost[character.lower()] += 1
 
                     # Increment generic mana equal to generic mana in mana cost
+                    # This breaks at mana costs above 9
                     elif character.isnumeric():
                         self.mana_cost['a'] += int(character)
 
@@ -120,6 +129,15 @@ class Card:
         else:
             raise AttributeError('No JSON file was provided. Card object characteristics cannot be parsed.')
 
+    def get_mana_count(self) -> int:
+        """
+        Determine total number of different kinds of mana this object can produce.
+        For example: wu land has a value of 2, a basic has a value of 1, rainbows have a value of 5 etc.
+        :return: Number of a land's colour identities.
+        """
+        identity_count = self.w + self.u + self.b + self.r + self.g + self.c
+        return identity_count
+
 
 class DeckList:
     """
@@ -130,41 +148,38 @@ class DeckList:
         self.deck_json = {}
         self.commanders = []
         self.cards = []
-        self.target = ManaTarget()
+        self.lands = []
 
         # If JSON is present parse it straight away
         if deck_json:
             self.deck_json = deck_json
-            self.commanders = self.parse_commander_json()
-            self.cards = self.parse_deck_json()
-            self.target = self.get_mana_target()
+            self.parse_commander_json()
+            self.parse_deck_json()
             self.deck_json = None
 
     def __str__(self):
         return f"Attributes: {self.__dict__}"
 
-    def parse_commander_json(self) -> list:
+    def parse_commander_json(self):
         """
         Parses the JSON file into commander Card objects and appends them to the DeckList object.
         """
-        commander_objects = []
         for cardname in list(self.deck_json['commanders'].keys()):
             card = Card(self.deck_json['commanders'][f'{cardname}']['card'])
             card.parse_card()
-            commander_objects.append(card)
-        return commander_objects
+            self.commanders.append(card)
 
-    def parse_deck_json(self) -> list:
+    def parse_deck_json(self):
         """
         Parses the JSON file into individual Card objects and appends them to the DeckList object.
         """
-        card_objects = []
         for cardname in list(self.deck_json['mainboard'].keys()):
             for count in range(0, self.deck_json['mainboard'][f'{cardname}']['quantity']):
                 card = Card(self.deck_json['mainboard'][f'{cardname}']['card'])
                 card.parse_card()
-                card_objects.append(card)
-        return card_objects
+                self.cards.append(card)
+                if card.card_category == 'land':
+                    self.lands.append(card)
 
     def get_mana_target(self) -> ManaTarget:
         """
