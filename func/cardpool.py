@@ -61,7 +61,7 @@ class CardPool:
             return True
 
         # Nothing happened so set success to False
-        return True
+        return False
 
 
     def success(self, mana_target: ManaTarget, generic: bool) -> bool:
@@ -85,7 +85,7 @@ class CardPool:
         # For each land card in the remaining pool...
         for land_card in remaining[:]:
             # Find all cases of lands that have a single colour wubrg+c or a(ny)
-            if land_card.get_mana_count() == 1:
+            if land_card.get_colours_count() == 1:
                 # Attempt to subtract the identity from ManaTarget and return whether it was a success
                 subtracted = self.subtract_from_balance(land_card)
                 if subtracted:
@@ -97,7 +97,7 @@ class CardPool:
         # For each land card in the remaining pool...
         for land_card in remaining[:]:
             # Find all cases of lands that have a single colour wubrg+c or a(ny)
-            if land_card.get_mana_count() == 2:
+            if land_card.get_colours_count() == 2:
                 # Attempt to subtract the identity from ManaTarget and return whether it was a success
                 subtracted = self.subtract_from_balance(land_card)
                 if subtracted:
@@ -109,7 +109,7 @@ class CardPool:
         # For each land card in the remaining pool...
         for land_card in remaining[:]:
             # Find all cases of lands that have a single colour wubrg+c or a(ny)
-            if land_card.get_mana_count() == 3:
+            if land_card.get_colours_count() == 3:
                 # Attempt to subtract the identity from ManaTarget and return whether it was a success
                 subtracted = self.subtract_from_balance(land_card)
                 if subtracted:
@@ -121,7 +121,7 @@ class CardPool:
         # For each land card in the remaining pool...
         for land_card in remaining[:]:
             # Find all cases of lands that have a single colour wubrg+c or a(ny)
-            if land_card.get_mana_count() == 4:
+            if land_card.get_colours_count() == 4:
                 # Attempt to subtract the identity from ManaTarget and return whether it was a success
                 subtracted = self.subtract_from_balance(land_card)
                 if subtracted:
@@ -133,7 +133,7 @@ class CardPool:
         # For each land card in the remaining pool...
         for land_card in remaining[:]:
             # Find all cases of lands that have a single colour wubrg+c or a(ny)
-            if land_card.get_mana_count() == 5:
+            if land_card.get_colours_count() == 5:
                 # Attempt to subtract the identity from ManaTarget and return whether it was a success
                 subtracted = self.subtract_from_balance(land_card)
                 if subtracted:

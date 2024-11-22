@@ -10,9 +10,10 @@ def query():
     print("At any stage:")
     print("The input 'clear' will skip this query to the next one.")
     print("The input 'exit' will exit the program.\n")
+    print("Reminder: this tool assumes you draw one card per turn and play one land per turn.\n"
+          "It understands nothing about ramp or filtering. Also MDFCs are ignored (they count as 0 mana spells).\n")
 
     while True:
-        deck_json = {}
         mt = ManaTarget()
         mt_flag = False
         url = input("Moxfield deck link (url): ")
@@ -84,7 +85,7 @@ def query():
             if mt_flag:
                 p_results = simulate_probability(iterations=1000, deck_json=deck_json, override_mt=mt)
             else:
-                p_results = simulate_probability(iterations=1000, deck_json=deck_json, account_generic=False)
+                p_results = simulate_probability(iterations=1000, deck_json=deck_json)
 
             if len(p_results['names']) == 2:
                 cmdr_names = f'''{p_results['names'][0]} and {p_results['names'][1]}'''
@@ -115,7 +116,7 @@ def query():
                     continue
             else:
                 try:
-                    t_results = simulate_turns(iterations=1000, deck_json=deck_json, account_generic=False)
+                    t_results = simulate_turns(iterations=1000, deck_json=deck_json)
                 except RuntimeError as e:
                     print(e)
                     print("Skipping to first prompt.")
@@ -151,8 +152,8 @@ def query():
                     continue
             else:
                 try:
-                    p_results = simulate_probability(iterations=1000, deck_json=deck_json, account_generic=False)
-                    t_results = simulate_turns(iterations=1000, deck_json=deck_json, account_generic=False)
+                    p_results = simulate_probability(iterations=1000, deck_json=deck_json)
+                    t_results = simulate_turns(iterations=1000, deck_json=deck_json)
                 except RuntimeError as e:
                     print(e)
                     print("Skipping to first prompt.")
