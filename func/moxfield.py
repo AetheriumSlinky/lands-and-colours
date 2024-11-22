@@ -243,10 +243,11 @@ def moxfield_api_request(api_url: str) -> dict:
             url=api_url).text
         json_file = json.loads(moxfield_response)
         try:
-            if json_file['name']:
-                return json_file
+            if len(json_file['commanders']) == 0:
+                raise AttributeError("Your deck doesn't have any commanders, i.e. it is not a commander deck.")
+            return json_file
         except KeyError:
-            raise AttributeError("Your deck is probably set to private or deck not found.")
+            raise AttributeError("Your deck is probably set to private or it doesn't exist.")
 
     except ConnectionError as e:
         raise ConnectionError(f"Connection error. Here's the error code: {e}")

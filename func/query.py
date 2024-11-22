@@ -10,13 +10,13 @@ def query():
     print("At any stage:")
     print("The input 'clear' will skip this query to the next one.")
     print("The input 'exit' will exit the program.\n")
-    print("Reminder: this tool assumes you draw one card per turn and play one land per turn.\n"
-          "It understands nothing about ramp or filtering. Also MDFCs are ignored (they count as 0 mana spells).\n")
+    print("REMINDER: this tool assumes you draw one card per turn and play one land per turn.\n"
+          "It understands nothing about ramp or filtering. Also MDFCs are ignored (they count as 0 mana spells).")
 
     while True:
         mt = ManaTarget()
         mt_flag = False
-        url = input("Moxfield deck link (url): ")
+        url = input("\nMoxfield deck link (url): ")
 
         if url.lower() == 'clear' or not url:
             print("Skipping to first prompt.")

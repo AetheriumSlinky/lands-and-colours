@@ -40,15 +40,15 @@ class CardPool:
         :return: True if subtraction happened, False if not.
         """
         # Find all coloured identities
-        for colour_key in 'wubrgc':
-            mana_count: int = self.balance.__getattribute__(colour_key)
-            land_count: int = land.__getattribute__(colour_key)
+        for colour_key in land.colour_identity:
+            mana_identities_remaining: int = self.balance.__getattribute__(colour_key)
+            current_land_identity: int = land.__getattribute__(colour_key)
 
             # If land produces the kind of mana that is needed, do subtraction
-            if mana_count > 0 and land_count > 0:
+            if mana_identities_remaining > 0 and current_land_identity > 0:
 
                 # Set new values for the ManaTarget
-                self.balance.__setattr__(colour_key, mana_count - 1)
+                self.balance.__setattr__(colour_key, mana_identities_remaining - 1)
 
                 # Subtraction happened so set success to True
                 return True
