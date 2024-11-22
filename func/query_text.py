@@ -1,0 +1,1 @@
+"""Logic functions for queries."""

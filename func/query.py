@@ -1,5 +1,6 @@
-"""Query (input)"""
+"""Input query main logic function."""
 
+import query_text as qt
 from func.moxfield import parse_moxfield_url, moxfield_api_request, ManaTarget
 from func.probabilities import simulate_turns, simulate_probability
 
@@ -16,24 +17,25 @@ def query():
     while True:
         mt = ManaTarget()
         mt_flag = False
+
         url = input("\nMoxfield deck link (url): ")
 
-        if url.lower() == 'clear' or not url:
+        if url.lower() == 'clear':
             print("Skipping to first prompt.")
             continue
         elif url.lower() == 'exit':
             break
-
-        try:
-            deck_json = moxfield_api_request(parse_moxfield_url(url=url))
-        except AttributeError as e:
-            print(e)
-            print("Skipping to first prompt.")
-            continue
-        except ConnectionError as e:
-            print(e)
-            print("Skipping to first prompt.")
-            continue
+        else:
+            try:
+                deck_json = moxfield_api_request(parse_moxfield_url(url=url))
+            except AttributeError as e:
+                print(e)
+                print("Skipping to first prompt.")
+                continue
+            except ConnectionError as e:
+                print(e)
+                print("Skipping to first prompt.")
+                continue
 
         custom = input("Do you want a custom mana target? Default: commander mana cost is used. Y/N ")
 
@@ -159,10 +161,9 @@ def query():
                     print("Skipping to first prompt.")
                     continue
 
+            cmdr_names = f'''{p_results['names'][0]}'''
             if len(p_results['names']) == 2:
-                cmdr_names = f'''{p_results['names'][0]} and {p_results['names'][1]}'''
-            else:
-                cmdr_names = f'''{p_results['names'][0]}'''
+                cmdr_names.join(f''' and {p_results['names'][1]}''')
 
             mana_target = (
                 f'''generic = {p_results['mana_target'].a}, '''
