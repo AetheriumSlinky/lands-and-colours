@@ -1,4 +1,5 @@
 """Describes cards, card pools and their associated functions."""
+from copy import deepcopy
 
 from func.moxfield import DeckList, Card, ManaTarget
 
@@ -10,9 +11,9 @@ class CardPool:
     def __init__(self, cards: DeckList):
         # Card objects from the parsed Moxfield DeckList object
         self.cards = cards.cards
-
-        # A ManaTarget object describing the success state
-        self.target = cards.target
+        self.lands = cards.lands
+        self.target = cards.get_mana_target()
+        self.balance = self.target
 
     def add_card(self, card: Card):
         """
@@ -20,6 +21,8 @@ class CardPool:
         :param card: A Card object to be added.
         """
         self.cards.append(card)
+        if card.card_category == 'land':
+            self.lands.append(card)
 
     def remove_card(self, card: Card):
         """
@@ -27,19 +30,39 @@ class CardPool:
         :param card: A Card object to be removed.
         """
         self.cards.remove(card)
+        if card.card_category == 'land':
+            self.lands.remove(card)
 
-    def get_land_identities(self) -> list:
+    def subtract_from_balance(self, land: Card) -> bool:
         """
-        A list of the colour identities of lands in the CardPool object
-        as permutations of 'wubrgca', where c stands for colourless and a stands for any (generic).
-        Examples of identities: 'w' or 'ubr' or 'c' or 'a'.
-        :return: List of colour identities.
+        Subtracts a corresponding Card's mana colour from the ManaTarget. Prioritises mana in 'wubrgc' order.
+        :param land: Land Card to subtract from the ManaTarget.
+        :return: True if subtraction happened, False if not.
         """
-        identities = []
-        for card in self.cards:
-            if card.card_category == 'land':
-                identities.append(card.colour_identity)
-        return identities
+        # Find all coloured identities
+        for colour_key in 'wubrgc':
+            mana_count: int = self.balance.__getattribute__(colour_key)
+            land_count: int = land.__getattribute__(colour_key)
+
+            # If land produces the kind of mana that is needed, do subtraction
+            if mana_count > 0 and land_count > 0:
+
+                # Set new values for the ManaTarget
+                self.balance.__setattr__(colour_key, mana_count - 1)
+
+                # Subtraction happened so set success to True
+                return True
+
+        # If no coloured matches were found subtract from any
+        if self.balance.a > 0:
+            self.balance.a -= 1
+
+            # Subtraction happened so set success to True
+            return True
+
+        # Nothing happened so set success to False
+        return True
+
 
     def success(self, mana_target: ManaTarget, generic: bool) -> bool:
         """
@@ -48,94 +71,85 @@ class CardPool:
         :param generic: True if generic mana is accounted for, False if not.
         :return: True if success, False if not.
         """
-        # Current state of desired colours to subtract from as described by the ManaTarget parameter
-        state = {'w': mana_target.w, 'u': mana_target.u, 'b': mana_target.b,
-                 'r': mana_target.r, 'g': mana_target.g, 'c': mana_target.c,
-                 'a': mana_target.a}
-
-        # Override generic mana to zero if generic is set to False
+        # Set mana target and override generic mana to 0 if generic flag is set to False
+        self.balance = deepcopy(mana_target)
         if not generic:
-            state['a'] = 0
+            self.balance.a = 0
 
-        # Land colour identities remaining in the pool
-        remaining: list = self.get_land_identities()
+        # Land Card objects remaining in the pool
+        remaining = deepcopy(self.lands)
 
         # Temporary storage for subtracting from generic mana later
-        storage: list = []
+        storage = []
 
-        # For each colour identity in the remaining pool...
-        for colour_id in remaining[:]:
-            # Find all cases of identities that have a single colour wubrg+c and a(ny)
-            if len(colour_id) == 1:
-                # And state must still have identities of that type left
-                if state[colour_id] > 0:
-                    # Remove an identity from the state
-                    state[colour_id] -= 1
-                # Remove all single coloured sources from list of remaining sources
+        # For each land card in the remaining pool...
+        for land_card in remaining[:]:
+            # Find all cases of lands that have a single colour wubrg+c or a(ny)
+            if land_card.get_mana_count() == 1:
+                # Attempt to subtract the identity from ManaTarget and return whether it was a success
+                subtracted = self.subtract_from_balance(land_card)
+                if subtracted:
+                    remaining.remove(land_card)
                 else:
-                    storage.append(colour_id)
-                remaining.remove(colour_id)
+                    storage.append(land_card)
+                    remaining.remove(land_card)
 
-        # For each colour identity in the remaining pool...
-        for colour_id in remaining[:]:
-            # Find all cases of identities that have two colours
-            if len(colour_id) == 2:
-                if state[colour_id[0]] > 0:
-                    state[colour_id[0]] -= 1
-                elif state[colour_id[1]] > 0:
-                    state[colour_id[1]] -= 1
+        # For each land card in the remaining pool...
+        for land_card in remaining[:]:
+            # Find all cases of lands that have a single colour wubrg+c or a(ny)
+            if land_card.get_mana_count() == 2:
+                # Attempt to subtract the identity from ManaTarget and return whether it was a success
+                subtracted = self.subtract_from_balance(land_card)
+                if subtracted:
+                    remaining.remove(land_card)
                 else:
-                    storage.append(colour_id)
-                remaining.remove(colour_id)
+                    storage.append(land_card)
+                    remaining.remove(land_card)
 
-        # For each colour identity in the remaining pool...
-        for colour_id in remaining[:]:
-            # Find all cases of identities that have three colours
-            if len(colour_id) == 3:
-                if state[colour_id[0]] > 0:
-                    state[colour_id[0]] -= 1
-                elif state[colour_id[1]] > 0:
-                    state[colour_id[1]] -= 1
-                elif state[colour_id[2]] > 0:
-                    state[colour_id[2]] -= 1
+        # For each land card in the remaining pool...
+        for land_card in remaining[:]:
+            # Find all cases of lands that have a single colour wubrg+c or a(ny)
+            if land_card.get_mana_count() == 3:
+                # Attempt to subtract the identity from ManaTarget and return whether it was a success
+                subtracted = self.subtract_from_balance(land_card)
+                if subtracted:
+                    remaining.remove(land_card)
                 else:
-                    storage.append(colour_id)
-                remaining.remove(colour_id)
+                    storage.append(land_card)
+                    remaining.remove(land_card)
 
-        # For each colour identity in the remaining pool...
-        for colour_id in remaining[:]:
-            # Find all cases of identities that have four colours
-            if len(colour_id) == 4:
-                # We just remove these because no such thing exists - pointless to check these
-                storage.append(colour_id)
-                remaining.remove(colour_id)
-
-        # For each colour identity in the remaining pool...
-        for colour_id in remaining[:]:
-            # Find all cases of identities that have five colours
-            if len(colour_id) == 5:
-                if state[colour_id[0]] > 0:
-                    state[colour_id[0]] -= 1
-                elif state[colour_id[1]] > 0:
-                    state[colour_id[1]] -= 1
-                elif state[colour_id[2]] > 0:
-                    state[colour_id[2]] -= 1
-                elif state[colour_id[3]] > 0:
-                    state[colour_id[3]] -= 1
-                elif state[colour_id[4]] > 0:
-                    state[colour_id[4]] -= 1
+        # For each land card in the remaining pool...
+        for land_card in remaining[:]:
+            # Find all cases of lands that have a single colour wubrg+c or a(ny)
+            if land_card.get_mana_count() == 4:
+                # Attempt to subtract the identity from ManaTarget and return whether it was a success
+                subtracted = self.subtract_from_balance(land_card)
+                if subtracted:
+                    remaining.remove(land_card)
                 else:
-                    storage.append(colour_id)
-                remaining.remove(colour_id)
+                    storage.append(land_card)
+                    remaining.remove(land_card)
+
+        # For each land card in the remaining pool...
+        for land_card in remaining[:]:
+            # Find all cases of lands that have a single colour wubrg+c or a(ny)
+            if land_card.get_mana_count() == 5:
+                # Attempt to subtract the identity from ManaTarget and return whether it was a success
+                subtracted = self.subtract_from_balance(land_card)
+                if subtracted:
+                    remaining.remove(land_card)
+                else:
+                    storage.append(land_card)
+                    remaining.remove(land_card)
 
         # Subtract remaining identities from generic mana
-        for colour_id in storage[:]:
-            if state["a"] > 0:
-                state["a"] -= 1
-                storage.remove(colour_id)
+        for land_card in storage[:]:
+            if self.balance.a > 0:
+                self.balance.a -= 1
+                storage.remove(land_card)
 
         # If mana target pool is empty it's a success
-        if sum(state.values()) <= 0:
+        if self.balance.total_mana() <= 0:
             return True
         else:
             return False
