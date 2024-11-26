@@ -5,6 +5,13 @@ import requests
 import json
 
 
+class MoxfieldError(Exception):
+    """
+    Used to raise Moxfield related errors.
+    """
+    pass
+
+
 class ManaTarget:
     """
     Mana target object. Number of each colour. Attributes: wubrg plus c(olourless) and a(ny i.e. generic).
@@ -224,7 +231,7 @@ def parse_moxfield_url(url: str) -> str:
     :return: API call url.
     """
     if 'moxfield' not in url:
-        raise AttributeError("Not a Moxfield link. Try Again.")
+        raise MoxfieldError("Not a Moxfield link. Try again.")
     deck_id = url[url.find('decks/') + len('decks/'):]
     return f'https://api.moxfield.com/v2/decks/all/{deck_id}'
 
@@ -244,11 +251,9 @@ def moxfield_api_request(api_url: str) -> dict:
         json_file = json.loads(moxfield_response)
         try:
             if len(json_file['commanders']) == 0:
-                raise AttributeError("Your deck doesn't have any commanders, i.e. it is not a commander deck.")
+                raise MoxfieldError("Your deck doesn't have any commanders, i.e. it is not a commander deck.")
             return json_file
         except KeyError:
-            raise AttributeError("Your deck is probably set to private or it doesn't exist.")
-
+            raise MoxfieldError("Your deck is probably set to private or it doesn't exist.")
     except ConnectionError as e:
         raise ConnectionError(f"Connection error. Here's the error code: {e}")
-
