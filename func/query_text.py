@@ -1,6 +1,6 @@
 """Logic functions for queries."""
 
-from func.moxfield import parse_moxfield_url, moxfield_api_request, ManaTarget, MoxfieldError
+from func.moxfield import parse_moxfield_url, moxfield_api_request, ManaTarget
 from func.probabilities import simulate_turns, simulate_probability
 
 

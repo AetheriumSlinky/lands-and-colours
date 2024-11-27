@@ -1,4 +1,5 @@
 """Describes cards, card pools and their associated functions."""
+
 from copy import deepcopy
 
 from func.moxfield import DeckList, Card, ManaTarget

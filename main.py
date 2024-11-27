@@ -1,4 +1,5 @@
 """Main"""
+
 from func.moxfield import MoxfieldError
 from func.query import query
 from func.query_text import SkipException, ExitException
