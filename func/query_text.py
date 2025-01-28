@@ -1,5 +1,7 @@
 """Logic functions for queries."""
 
+import asyncio
+
 from func.moxfield import parse_moxfield_url, moxfield_api_request, ManaTarget
 from func.probabilities import simulate_turns, simulate_probability
 
@@ -119,8 +121,8 @@ def turn_count_simulation(deck_json: dict, target: ManaTarget) -> dict:
     :return: Default probability if ManaTarget was default, override if a custom ManaTarget was provided.
     """
     if not target.total_mana() == 0:
-        return simulate_turns(iterations=1000, deck_json=deck_json, override_mt=target)
-    return simulate_turns(iterations=1000, deck_json=deck_json)
+        return asyncio.run(simulate_turns(iterations=1000, deck_json=deck_json, override_mt=target))
+    return asyncio.run(simulate_turns(iterations=1000, deck_json=deck_json))
 
 
 def commander_names(names: list) -> str:

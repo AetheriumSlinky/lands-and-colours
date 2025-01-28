@@ -251,7 +251,7 @@ def moxfield_api_request(api_url: str) -> dict:
     :return: JSON file.
     """
     # DON'T MAKE TOO MANY API CALLS PER SECOND PLS
-    time.sleep(1)
+    time.sleep(0.2)
     try:
         moxfield_response = requests.get(
             headers={'User-Agent': user_agent},
