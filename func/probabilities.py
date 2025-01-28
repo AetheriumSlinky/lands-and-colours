@@ -2,7 +2,6 @@
 
 import asyncio
 import random
-import time
 from copy import deepcopy
 
 from func.moxfield import DeckList, ManaTarget
@@ -33,8 +32,6 @@ def simulate_probability(iterations: int, deck_json: dict,
     for commander_card in decklist.commanders:
         commander_names.append(commander_card.name)
 
-    start = time.time()
-
     for _ in range(0, iterations):
         deck = deepcopy(start_deck)
         hand = deepcopy(start_hand)
@@ -46,9 +43,6 @@ def simulate_probability(iterations: int, deck_json: dict,
 
         if hand.success(target, account_generic):
             successes += 1
-
-    finish = time.time()
-    print(round(finish - start, 2))
 
     return {'names': commander_names, 'probability': (successes / iterations), 'mana_target': mana_target}
 
@@ -77,32 +71,31 @@ async def simulate_turns(iterations: int, deck_json: dict,
     for commander_card in decklist.commanders:
         commander_names.append(commander_card.name)
 
-    start = time.time()
-
-    counts = [iterate_turns(iterations, start_deck, start_hand, account_generic, mana_target) for _ in range(0, iterations)]
+    counts = [single_turns_iteration(start_deck, start_hand, account_generic, mana_target) for _ in range(0, iterations)]
     turn_counts = await asyncio.gather(*counts)
-
-    finish = time.time()
-    print(round(finish - start, 2))
 
     return {'names': commander_names, 'turns': (sum(turn_counts) / iterations), 'mana_target': mana_target}
 
 
-async def iterate_turns(iterations: int, starting_deck: CardPool, starting_hand: CardPool,
-                        generic: bool, mana_target: ManaTarget) -> int:
+async def single_turns_iteration(starting_deck: CardPool, starting_hand: CardPool,
+                                 generic: bool, mana_target: ManaTarget) -> int:
 
-    for _ in range(0, iterations):
-        deck = deepcopy(starting_deck)
-        hand = deepcopy(starting_hand)
-        target = deepcopy(mana_target)
-        draw_count = 0
+    deck = starting_deck
+    hand = starting_hand
+    target = mana_target
+    draw_count = 0
 
-        while not hand.success(target, generic):
-            draw = random.choice(deck.cards)
-            deck.remove_card(draw)
-            hand.add_card(draw)
-            draw_count += 1
-            if draw_count > 50:
-                raise RuntimeError("Your simulation has drawn more than 50 cards. "
-                                   "Are you sure you have enough lands that can produce appropriate colours?")
-        return draw_count - 7
+    while not hand.success(target, generic):
+        draw = random.choice(deck.cards)
+        deck.remove_card(draw)
+        hand.add_card(draw)
+        draw_count += 1
+        if draw_count > 50:
+            raise RuntimeError("Your simulation has drawn more than 50 cards. "
+                               "Are you sure you have enough lands that can produce appropriate colours?")
+
+    for card in hand.cards:
+        hand.remove_card(card)
+        deck.add_card(card)
+
+    return draw_count - 7
