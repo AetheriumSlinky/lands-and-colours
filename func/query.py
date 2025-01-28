@@ -37,7 +37,7 @@ def query():
         cmdr_txt = qt.commander_names(p['names'])
         mana_target_text = qt.mana_target_text(p['mana_target'])
         prob_txt = f'''{int(round(p['probability'], 2) * 100)} %'''
-        print(f"\nCommanders: {cmdr_txt}\nMana target: {mana_target_text}\nProbability: {prob_txt}.\n")
+        print(f"\nCommanders: {cmdr_txt}\nMana target: {mana_target_text}\nProbability: {prob_txt}.")
 
 
     elif mode == 't':
@@ -45,7 +45,7 @@ def query():
         cmdr_txt = qt.commander_names(t['names'])
         mana_target_text = qt.mana_target_text(t['mana_target'])
         turns_txt = f'''{round(t['turns'], 1)}'''
-        print(f"\nCommanders: {cmdr_txt}\nMana target: {mana_target_text}\nTurn count: {turns_txt}.\n")
+        print(f"\nCommanders: {cmdr_txt}\nMana target: {mana_target_text}\nTurn count: {turns_txt}.")
 
     elif mode == 'b':
         p = qt.probability_simulation(deck_json=deck_json, target=mt)
@@ -55,7 +55,7 @@ def query():
         prob_txt = f'''{int(round(p['probability'], 2) * 100)} %'''
         turns_txt = f'''{round(t['turns'], 1)}'''
         print(f"\nCommanders: {cmdr_txt}\nMana target: {mana_target_text}\nProbability: {prob_txt} "
-              f"| Turn count: {turns_txt}.\n")
+              f"| Turn count: {turns_txt}.")
 
     else:
         print("Something went really wrong.")

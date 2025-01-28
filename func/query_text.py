@@ -27,11 +27,11 @@ def handle_skip_exit(func):
     def wrapper(user_input: str):
         """Wrapper."""
         if not user_input:
-            raise SkipException("No input. Skipping back to the beginning.")
+            raise SkipException("No input.")
         elif user_input.lower() in ['clear', 'skip']:
-            raise SkipException("Query cleared. Skipping back to the beginning.")
+            raise SkipException("Clear command was given.")
         elif user_input.lower() == 'exit':
-            raise ExitException("Exiting tool.")
+            raise ExitException("Exit command was given.")
         else:
             return func(user_input)
     return wrapper
@@ -72,7 +72,7 @@ def custom_mt_query(mana_input: str) -> ManaTarget:
 
     for char in mana_input:
         if char.lower() not in 'wubrgca':
-            raise SkipException("Erroneous input. Skipping back to the beginning.")
+            raise SkipException("Erroneous input when defining a custom mana target.")
         else:
             prev = mana_target_obj.__getattribute__(char)
             mana_target_obj.__setattr__(char, prev + 1)
@@ -96,7 +96,7 @@ def simulation_modes_prompt(mode: str) -> str:
     elif mode == 'both':
         return 'b'
     else:
-        raise SkipException("Erroneous input. Skipping to the beginning.")
+        raise SkipException("Erroneous input when determining simulation mode(s).")
 
 
 def probability_simulation(deck_json: dict, target: ManaTarget) -> dict:

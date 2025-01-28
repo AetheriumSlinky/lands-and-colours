@@ -4,10 +4,18 @@ import time
 import requests
 import json
 
+from user_agent import user_agent
+
 
 class MoxfieldError(Exception):
     """
     Used to raise Moxfield related errors.
+    """
+    pass
+
+class UserAgentError(Exception):
+    """
+    Used to raise an error if your user-agent isn't valid.
     """
     pass
 
@@ -134,7 +142,7 @@ class Card:
 
         # If no JSON is provided, but you still try to parse the card, throw an error
         else:
-            raise AttributeError('No JSON file was provided. Card object characteristics cannot be parsed.')
+            raise AttributeError('No JSON file was found. Card object characteristics cannot be parsed.')
 
     def get_colours_count(self) -> int:
         """
@@ -231,7 +239,7 @@ def parse_moxfield_url(url: str) -> str:
     :return: API call url.
     """
     if 'moxfield' not in url:
-        raise MoxfieldError("Not a Moxfield link. Try again.")
+        raise MoxfieldError("Not a Moxfield link.")
     deck_id = url[url.find('decks/') + len('decks/'):]
     return f'https://api.moxfield.com/v2/decks/all/{deck_id}'
 
@@ -246,8 +254,10 @@ def moxfield_api_request(api_url: str) -> dict:
     time.sleep(1)
     try:
         moxfield_response = requests.get(
-            headers={'User-Agent': 'LandsAndColoursTool/0.1.0'},
+            headers={'User-Agent': user_agent},
             url=api_url).text
+        if 'You are unable to access' in moxfield_response:
+            raise UserAgentError("You did not provide a whitelisted User-Agent.")
         json_file = json.loads(moxfield_response)
         try:
             if len(json_file['commanders']) == 0:
