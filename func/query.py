@@ -5,7 +5,6 @@ from pstats import SortKey, Stats
 from func.moxfield import moxfield_api_request, parse_moxfield_url
 
 import func.query_text as q_text
-from func.cardpool import ManaTarget
 from func.query_text import turn_count_simulation
 
 
@@ -29,7 +28,7 @@ def query():
         mt = q_text.custom_mt_query(mana_target_prompt)
 
     else:
-        mt = ManaTarget()
+        mt = []
         print("That's a no. Using default mana target.")
 
     mode_prompt = input("Do you want to simulate the 'probability' of getting your colours on curve "
@@ -68,7 +67,7 @@ def query():
 
 with Profile() as profile:
     print(f'{turn_count_simulation(
-        moxfield_api_request(parse_moxfield_url(url="https://moxfield.com/decks/APo-vARA-kuKSGY_RTw41w")), ManaTarget())
+        moxfield_api_request(parse_moxfield_url(url="https://moxfield.com/decks/APo-vARA-kuKSGY_RTw41w")), [])
     }')
     (
         Stats(profile)

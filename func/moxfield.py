@@ -1,6 +1,7 @@
 """Parse decklist into Card objects and other information starting from url."""
 
 import time
+
 import requests
 import json
 
@@ -20,31 +21,6 @@ class UserAgentError(Exception):
     pass
 
 
-class ManaTarget:
-    """
-    Mana target object. Number of each colour. Attributes: wubrg plus c(olourless) and a(ny i.e. generic).
-    """
-    def __init__(self, w=0, u=0, b=0, r=0, g=0, c=0, a=0):
-        self.w = w
-        self.u = u
-        self.b = b
-        self.r = r
-        self.g = g
-        self.c = c
-        self.a = a
-
-    def __str__(self):
-        return f"Attributes: {self.__dict__}"
-
-    def total_mana(self) -> int:
-        """
-        Determines how much mana in total is in the ManaTarget object. Think of as len() for this object.
-        :return: Total number of manas.
-        """
-        mana_sum = self.w + self.u + self.b + self.r + self.g + self.c + self.a
-        return mana_sum
-
-
 class Card:
     """
     A card item with characteristics. Initially empty unless the parse function is used.
@@ -52,6 +28,7 @@ class Card:
     """
     def __init__(self, card_json=None):
         self.name = ''
+        self.identifier = None
         self.card_json = card_json
         self.card_category = ''
         self.colour_identity = ''
@@ -59,24 +36,28 @@ class Card:
         self.mana_cost = {'w': 0, 'u': 0, 'b': 0, 'r': 0, 'g': 0, 'c': 0, 'a': 0}
 
         # These are for lands producing mana
+        self.a = 0
         self.w = 0
         self.u = 0
         self.b = 0
         self.r = 0
         self.g = 0
         self.c = 0
+        self.mana_produced = []
 
     def __str__(self):
         return f"Attributes: {self.__dict__}"
 
-    def parse_card(self):
+    def parse_card(self, identifier: int):
         """
         Parses the card's JSON into characteristics and empties JSON.
+        :param identifier: The identifier of the Card object.
         """
         # Make sure JSON exists
         if self.card_json:
 
             self.name = self.card_json['name']
+            self.identifier = identifier
 
             # If the card is an MDFC just... ignore it, kinda - it's a nonland
             if '//' in self.card_json['type_line']:
@@ -134,6 +115,9 @@ class Card:
                     elif character.isnumeric():
                         self.mana_cost['a'] += int(character)
 
+            # Now that the card is parsed set the mana produced properly
+            self.mana_produced = [self.a, self.w, self.u, self.b, self.r, self.g, self.c]
+
             # Set the total mana value of the card
             self.mana_value = self.card_json['cmc']
 
@@ -150,8 +134,7 @@ class Card:
         For example: wu land has a value of 2, a basic has a value of 1, rainbows have a value of 5 etc.
         :return: Number of a land's colour identities.
         """
-        identity_count = self.w + self.u + self.b + self.r + self.g + self.c
-        return identity_count
+        return sum(self.mana_produced)
 
 
 class DeckList:
@@ -163,7 +146,8 @@ class DeckList:
         self.deck_json = {}
         self.commanders = []
         self.cards = []
-        self.lands = []
+        self.card_ids = []
+        self.land_ids = []
 
         # If JSON is present parse it straight away
         if deck_json:
@@ -179,29 +163,32 @@ class DeckList:
         """
         Parses the JSON file into commander Card objects and appends them to the DeckList object.
         """
-        for cardname in list(self.deck_json['commanders'].keys()):
+        for card_index, cardname in enumerate(list(self.deck_json['commanders'].keys())):
             card = Card(self.deck_json['commanders'][f'{cardname}']['card'])
-            card.parse_card()
+            card.parse_card(card_index)
             self.commanders.append(card)
 
     def parse_deck_json(self):
         """
         Parses the JSON file into individual Card objects and appends them to the DeckList object.
         """
+        card_identifier = 0
         for cardname in list(self.deck_json['mainboard'].keys()):
             for count in range(0, self.deck_json['mainboard'][f'{cardname}']['quantity']):
                 card = Card(self.deck_json['mainboard'][f'{cardname}']['card'])
-                card.parse_card()
+                card.parse_card(card_identifier)
                 self.cards.append(card)
+                self.card_ids.append(card_identifier)
                 if card.card_category == 'land':
-                    self.lands.append(card)
+                    self.land_ids.append(card_identifier)
+                card_identifier += 1
 
-    def get_mana_target(self) -> ManaTarget:
+    def get_mana_target(self) -> list:
         """
-        Gets the ManaTarget object based on commander Card objects in the DeckList.
-        :return: ManaTarget object.
+        Gets a list of manas based on commander Card objects in the DeckList.
+        :return: A list describing the mana required.
         """
-        manas = ManaTarget()
+        manas = [0, 0, 0, 0, 0, 0, 0]
 
         # This dict is for partners and backgrounds etc
         mana_values = {0: 0, 1: 0}
@@ -218,18 +205,38 @@ class DeckList:
                 # Exclude generic mana
                 if colour_key != 'a':
 
-                    # Actually change the ManaTarget object's values
-                    prev = manas.__getattribute__(colour_key)
-                    manas.__setattr__(colour_key, max(commander.mana_cost[colour_key], prev))
+                    # Actually change the mana target list's values
+                    if colour_key == 'w':
+                        manas[1] += commander.mana_cost[colour_key]
+                    elif colour_key == 'u':
+                        manas[2] += commander.mana_cost[colour_key]
+                    elif colour_key == 'b':
+                        manas[3] += commander.mana_cost[colour_key]
+                    elif colour_key == 'r':
+                        manas[4] += commander.mana_cost[colour_key]
+                    elif colour_key == 'g':
+                        manas[5] += commander.mana_cost[colour_key]
+                    elif colour_key == 'c':
+                        manas[6] += commander.mana_cost[colour_key]
 
         # Compare all stored generic costs and pick the bigger one, then subtract all coloured costs
-        manas.a = int(max(mana_values.values()) - manas.total_mana())
+        manas[0] = int(max(mana_values.values()) - sum(manas))
 
         # In some hybrid mana cases it's possible that generic mana is set to negative so just fix that
-        if manas.a < 0:
-            manas.a = 0
+        if manas[0] < 0:
+            manas[0] = 0
 
         return manas
+
+    def get_card(self, identifier: int) -> Card:
+        """
+        Finds the corresponding Card object based on its identifier.
+        :param identifier: The identifier number of a Card object.
+        :return: The Card object.
+        """
+        card_index = self.card_ids.index(identifier)
+        card = self.cards[card_index]
+        return card
 
 
 def parse_moxfield_url(url: str) -> str:
