@@ -1,8 +1,8 @@
 """Main"""
 
 from func.moxfield import MoxfieldError, UserAgentError
-from func.query import query
 from func.query_text import SkipException, ExitException
+from func.query import query
 
 if __name__ == "__main__":
     print("At any stage:")

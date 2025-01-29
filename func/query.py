@@ -1,7 +1,6 @@
 """Input query main logic function."""
 
 import func.query_text as q_text
-from func.query_text import turn_count_simulation
 
 
 def query():

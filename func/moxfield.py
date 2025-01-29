@@ -1,7 +1,6 @@
 """Parse decklist into Card objects and other information starting from url."""
 
 import time
-
 import requests
 import json
 
