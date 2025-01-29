@@ -1,9 +1,8 @@
 """Main"""
-import time
 
 from func.moxfield import MoxfieldError, UserAgentError
-from func.query import query
 from func.query_text import SkipException, ExitException
+from func.query import query
 
 if __name__ == "__main__":
     print("At any stage:")
@@ -22,6 +21,5 @@ if __name__ == "__main__":
             continue
         except (ExitException, UserAgentError) as e:
             print(e)
-            print("Exiting tool...")
-            time.sleep(3)
+            input("Press enter to exit.")
             break
