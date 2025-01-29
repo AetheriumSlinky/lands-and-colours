@@ -1,9 +1,5 @@
 """Input query main logic function."""
 
-from cProfile import Profile
-from pstats import SortKey, Stats
-from func.moxfield import moxfield_api_request, parse_moxfield_url
-
 import func.query_text as q_text
 from func.query_text import turn_count_simulation
 
@@ -63,15 +59,3 @@ def query():
 
     else:
         print("Something went really wrong.")
-
-
-with Profile() as profile:
-    print(f'{turn_count_simulation(
-        moxfield_api_request(parse_moxfield_url(url="https://moxfield.com/decks/APo-vARA-kuKSGY_RTw41w")), [])
-    }')
-    (
-        Stats(profile)
-        .strip_dirs()
-        .sort_stats(SortKey.CALLS)
-        .print_stats()
-    )
