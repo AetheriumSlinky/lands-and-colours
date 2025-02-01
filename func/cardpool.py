@@ -123,7 +123,7 @@ def subtract_from_balance(balance_list: list, land_card: Card) -> tuple:
     Subtracts mana produced by a land card from the balance.
     :param balance_list: A list of previous mana balance.
     :param land_card: A Card object to subtract from the balance.
-    :return: Tuple where first value is the new balance and the second value is boolean for whether subtraction happened.
+    :return: Tuple where first value is the new balance and the second value is True if subtraction happened.
     """
     new_balance = balance_list
 

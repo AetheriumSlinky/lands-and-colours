@@ -2,22 +2,9 @@
 
 import asyncio
 
+from func.exceptions import SkipException, ExitException
 from func.moxfield import parse_moxfield_url, moxfield_api_request
 from func.probabilities import simulate_turns, simulate_probability
-
-
-class ExitException(Exception):
-    """
-    Used to exit the query.
-    """
-    pass
-
-
-class SkipException(Exception):
-    """
-    Used to clear the query and start over.
-    """
-    pass
 
 
 def handle_skip_exit(func):
@@ -153,7 +140,7 @@ def commander_names(names: list) -> str:
 def mana_target_text(mana_target: list) -> str:
     """
     Constructs a printable string of text with all mana types.
-    :param mana_target: A ManaTarget object.
+    :param mana_target: A list of mana counts.
     :return: Mana target in text format.
     """
     text = (

@@ -1,10 +1,12 @@
 """Main"""
 
-from func.moxfield import MoxfieldError, UserAgentError
-from func.query_text import SkipException, ExitException
+from func.exceptions import SkipException, ExitException, MoxfieldError, UserAgentError
 from func.query import query
 
-if __name__ == "__main__":
+def main():
+    """
+    Main.
+    """
     print("At any stage:")
     print("The input 'clear' will skip this query to the next one.")
     print("The input 'exit' will exit the program.\n")
@@ -23,3 +25,6 @@ if __name__ == "__main__":
             print(e)
             input("Press enter to exit.")
             break
+
+if __name__ == '__main__':
+    main()

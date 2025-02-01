@@ -4,94 +4,88 @@ import time
 import requests
 import json
 
-from user_agent import user_agent
-
-
-class MoxfieldError(Exception):
-    """
-    Used to raise Moxfield related errors.
-    """
-    pass
-
-class UserAgentError(Exception):
-    """
-    Used to raise an error if your user-agent isn't valid.
-    """
-    pass
+from func.exceptions import MoxfieldError, UserAgentError
+from user_agent import read_ua
 
 
 class Card:
     """
-    A card item with characteristics. Initially empty unless the parse function is used.
-    Beware of trying to parse an empty JSON file.
+    A card item with characteristics.
     """
-    def __init__(self, card_json=None):
+    def __init__(self, identifier: int, card_json=None):
+
+        # Provide a dict containing the card's JSON
+        self.__card_json = card_json
+
+        # Properties that are accessible
+        self.identifier = identifier
         self.name = ''
-        self.identifier = None
-        self.card_json = card_json
         self.card_category = ''
         self.colour_identity = ''
         self.mana_value = 0
-        self.mana_cost = {'w': 0, 'u': 0, 'b': 0, 'r': 0, 'g': 0, 'c': 0, 'a': 0}
+        self.mana_cost = {'a': 0, 'w': 0, 'u': 0, 'b': 0, 'r': 0, 'g': 0, 'c': 0}
+        self.mana_produced = [0, 0, 0, 0, 0, 0, 0]
 
-        # These are for lands producing mana
-        self.a = 0
-        self.w = 0
-        self.u = 0
-        self.b = 0
-        self.r = 0
-        self.g = 0
-        self.c = 0
-        self.mana_produced = []
+        # Finally, parse card
+        self.__parse_card(identifier)
 
     def __str__(self):
         return f"Attributes: {self.__dict__}"
 
-    def parse_card(self, identifier: int):
+    def __set_mana_to_one(self, colour_key: str):
+        """
+        Sets the correct mana production for the card.
+        :param colour_key: A single character string from wubgrca.
+        """
+        for index, colour in enumerate('awubrgc'):
+            if colour_key == colour:
+                self.mana_produced[index] = 1
+
+    def __parse_card(self, identifier: int):
         """
         Parses the card's JSON into characteristics and empties JSON.
-        :param identifier: The identifier of the Card object.
+        :param identifier: The identifier of the Card object or raises ValueError if no json was present.
         """
         # Make sure JSON exists
-        if self.card_json:
+        if self.__card_json:
 
-            self.name = self.card_json['name']
+            self.name = self.__card_json['name']
             self.identifier = identifier
 
             # If the card is an MDFC just... ignore it, kinda - it's a nonland
-            if '//' in self.card_json['type_line']:
-                self.colour_identity = ''.join(self.card_json['color_identity']).lower()
+            if '//' in self.__card_json['type_line']:
+                self.colour_identity = ''.join(self.__card_json['color_identity']).lower()
                 self.card_category = 'nonland'
 
             # Other lands get categorised as lands
-            elif 'Land' in self.card_json['type_line']:
+            elif 'Land' in self.__card_json['type_line']:
                 self.card_category = 'land'
 
                 # If the oracle text contains keywords for any colour or a fetch set identity to wubrg
-                if 'any color' in self.card_json['oracle_text'] or 'acrifice' in self.card_json['oracle_text']:
+                if 'any color' in self.__card_json['oracle_text'] or 'acrifice' in self.__card_json['oracle_text']:
                     self.colour_identity = 'wubrg'
                     for colour_key in self.colour_identity:
-                        self.__setattr__(colour_key, 1)
+                        self.__set_mana_to_one(colour_key)
 
                 # If the JSON identity is empty we assume the land can produce colourless mana (cue Maze of Ith...)
-                elif ''.join(self.card_json['color_identity']) == '':
+                elif ''.join(self.__card_json['color_identity']) == '':
                     self.colour_identity = 'c'
-                    self.c = 1
+                    self.__set_mana_to_one('c')
 
-                elif 'Basic' in self.card_json['type_line']:
-                    self.colour_identity = ''.join(self.card_json['color_identity']).lower()
+                elif 'Basic' in self.__card_json['type_line']:
+                    self.colour_identity = ''.join(self.__card_json['color_identity']).lower()
                     for colour_key in self.colour_identity:
-                        self.__setattr__(colour_key, 1)
+                        self.__set_mana_to_one(colour_key)
 
                 # Catch all other identities such as duals
                 else:
-                    self.colour_identity = ''.join(self.card_json['color_identity']).lower()
+                    self.colour_identity = ''.join(self.__card_json['color_identity']).lower()
                     for colour_key in self.colour_identity:
-                        self.__setattr__(colour_key, 1)
+                        self.__set_mana_to_one(colour_key)
 
             # Catch nonlands
             else:
-                self.colour_identity = ''.join(self.card_json['color_identity']).lower()
+                self.colour_identity = ''.join(self.__card_json['color_identity']).lower()
 
                 # If colour identity is empty (such as colourless Artifacts) give it the 'c' identity
                 if not self.colour_identity:
@@ -100,10 +94,10 @@ class Card:
                 self.card_category = 'nonland'
 
             # Further sort nonlands' costs but exclude MDFCs again - they're now nonlands with no cost
-            if (self.card_category == 'nonland') and ('//' not in self.card_json['type_line']):
+            if (self.card_category == 'nonland') and ('//' not in self.__card_json['type_line']):
 
                 # Loop through all colour identity characters in the mana cost
-                for character in self.card_json['mana_cost']:
+                for character in self.__card_json['mana_cost']:
 
                     # Increment mana_cost for each coloured mana
                     if character.lower() in 'wubrgc':
@@ -114,14 +108,11 @@ class Card:
                     elif character.isnumeric():
                         self.mana_cost['a'] += int(character)
 
-            # Now that the card is parsed set the mana produced properly
-            self.mana_produced = [self.a, self.w, self.u, self.b, self.r, self.g, self.c]
-
             # Set the total mana value of the card
-            self.mana_value = self.card_json['cmc']
+            self.mana_value = self.__card_json['cmc']
 
             # Clear JSON because it's rather heavy and there's no reason to keep it around anymore
-            self.card_json = None
+            self.__card_json = None
 
         # If no JSON is provided, but you still try to parse the card, throw an error
         else:
@@ -142,7 +133,7 @@ class DeckList:
     If JSON is provided the object is automatically parsed and JSON cleared at the end.
     """
     def __init__(self, deck_json=None):
-        self.deck_json = {}
+        self.__deck_json = {}
         self.commanders = []
         self.cards = []
         self.card_ids = []
@@ -150,37 +141,33 @@ class DeckList:
 
         # If JSON is present parse it straight away
         if deck_json:
-            self.deck_json = deck_json
-            self.parse_commander_json()
-            self.parse_deck_json()
-            self.deck_json = None
+            self.__deck_json = deck_json
+            self.__parse_commander_json()
+            self.__parse_deck_json()
+            self.__deck_json = None
 
     def __str__(self):
         return f"Attributes: {self.__dict__}"
 
-    def parse_commander_json(self):
+    def __parse_commander_json(self):
         """
         Parses the JSON file into commander Card objects and appends them to the DeckList object.
         """
-        for card_index, cardname in enumerate(list(self.deck_json['commanders'].keys())):
-            card = Card(self.deck_json['commanders'][f'{cardname}']['card'])
-            card.parse_card(card_index)
+        for card_index, cardname in enumerate(list(self.__deck_json['commanders'].keys())):
+            card = Card(card_index, self.__deck_json['commanders'][f'{cardname}']['card'])
             self.commanders.append(card)
 
-    def parse_deck_json(self):
+    def __parse_deck_json(self):
         """
         Parses the JSON file into individual Card objects and appends them to the DeckList object.
         """
-        card_identifier = 0
-        for cardname in list(self.deck_json['mainboard'].keys()):
-            for count in range(0, self.deck_json['mainboard'][f'{cardname}']['quantity']):
-                card = Card(self.deck_json['mainboard'][f'{cardname}']['card'])
-                card.parse_card(card_identifier)
+        for card_index, cardname in enumerate(list(self.__deck_json['mainboard'].keys())):
+            for count in range(0, self.__deck_json['mainboard'][f'{cardname}']['quantity']):
+                card = Card(card_index, self.__deck_json['mainboard'][f'{cardname}']['card'])
                 self.cards.append(card)
-                self.card_ids.append(card_identifier)
+                self.card_ids.append(card_index)
                 if card.card_category == 'land':
-                    self.land_ids.append(card_identifier)
-                card_identifier += 1
+                    self.land_ids.append(card_index)
 
     def get_mana_target(self) -> list:
         """
@@ -260,7 +247,7 @@ def moxfield_api_request(api_url: str) -> dict:
     time.sleep(0.2)
     try:
         moxfield_response = requests.get(
-            headers={'User-Agent': user_agent},
+            headers={'User-Agent': read_ua()},
             url=api_url).text
         if 'You are unable to access' in moxfield_response:
             raise UserAgentError("You did not provide a whitelisted User-Agent.")
@@ -271,5 +258,7 @@ def moxfield_api_request(api_url: str) -> dict:
             return json_file
         except KeyError:
             raise MoxfieldError("Your deck is probably set to private or it doesn't exist.")
+    except (NameError, FileNotFoundError):
+        raise UserAgentError("User-Agent string or file not set properly. Modify user_agent.py, please.")
     except ConnectionError as e:
         raise ConnectionError(f"Connection error. Here's the error code: {e}")
