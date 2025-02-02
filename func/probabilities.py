@@ -14,8 +14,8 @@ async def simulate_probability(iterations: int, deck_json: dict,
     :param iterations: Number of iterations for the simulation. A good starting point is 1k.
     :param deck_json: The JSON file of the deck.
     :param account_generic: True (default) if you're looking to hit your commander's manas. False if colours are enough.
-    :param override_mt: A custom ManaTarget object if you want to override the commander-based mana target.
-    :return: Dict of commander_names, probability, mana_target (ManaTarget).
+    :param override_mt: A custom list of manas if you want to override the commander-based mana target.
+    :return: Dict of commander_names (list), probability (float), list of manas (list).
     """
     decklist = DeckList(deck_json=deck_json)
 
@@ -64,7 +64,7 @@ async def simulate_turns(iterations: int, deck_json: dict,
     :param deck_json: The JSON file of the deck.
     :param account_generic: True (default) if you're looking to hit your commander's manas. False if colours are enough.
     :param override_mt: A custom list of manas if you want to override the commander-based mana target.
-    :return: A Dict of commander_names (list), turns (float), mana_target (list).
+    :return: A Dict of commander_names (list), turns (float), list of manas (list).
     """
 
     decklist = DeckList(deck_json=deck_json)

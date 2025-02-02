@@ -16,9 +16,9 @@ def query():
     if q_text.custom_mt_prompt(custom_mt_y_n):
 
         mana_target_prompt = input(
-            "Please enter your custom mana target. Format: 'wubrgca', "
-            "where 'c' is colourless and 'a' (any) is generic costs, "
-            "e.g. {2}{W}{W}{U} is 'wwuaa' or {1}{C} is 'ca'. ")
+            "Please enter your custom mana target. Format: '#wubrgc', "
+            "where '# stands for the number of generic mana and 'c' is colourless, "
+            "e.g. {2}{W}{W}{U} is '2ww' or {1}{C} is '1c'. ")
 
         mt = q_text.custom_mt_query(mana_target_prompt)
 

@@ -118,7 +118,7 @@ class Card:
         else:
             raise AttributeError('No JSON file was found. Card object characteristics cannot be parsed.')
 
-    def get_colours_count(self) -> int:
+    def get_total_colours_count(self) -> int:
         """
         Determine total number of different kinds of mana this object can produce.
         For example: wu land has a value of 2, a basic has a value of 1, rainbows have a value of 5 etc.
