@@ -1,7 +1,8 @@
-"""Main"""
+"""Main."""
 
 from func.exceptions import SkipException, ExitException, MoxfieldError, UserAgentError
 from func.query import query
+
 
 def main():
     """
@@ -25,6 +26,7 @@ def main():
             print(e)
             input("   Press enter to exit.")
             break
+
 
 if __name__ == '__main__':
     main()

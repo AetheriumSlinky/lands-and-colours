@@ -60,4 +60,4 @@ def query():
               f"| Turn count: {turns_txt}.")
 
     else:
-        raise SkipException(" > Something went really wrong while calculating simulations.")
+        raise SkipException(" > Something went really wrong while parsing data for simulations.")
