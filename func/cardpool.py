@@ -39,7 +39,7 @@ def success(decklist: DeckList, mana_balance: list, identifiers: list, generic: 
     for land_card_id in remaining_ids[:]:
         land_card = get_card(decklist, land_card_id)
         # Find all cases of lands that have a single colour wubrg+c or a(ny)
-        if land_card.get_colours_count() == 1:
+        if land_card.get_total_colours_count() == 1:
             # Attempt to subtract the identity from ManaTarget and return whether it was a success
             result = subtract_from_balance(balance, land_card)
             balance = result[0]
@@ -53,7 +53,7 @@ def success(decklist: DeckList, mana_balance: list, identifiers: list, generic: 
     for land_card_id in remaining_ids[:]:
         land_card = get_card(decklist, land_card_id)
         # Find all cases of lands that have a single colour wubrg+c or a(ny)
-        if land_card.get_colours_count() == 2:
+        if land_card.get_total_colours_count() == 2:
             # Attempt to subtract the identity from ManaTarget and return whether it was a success
             result = subtract_from_balance(balance, land_card)
             balance = result[0]
@@ -67,7 +67,7 @@ def success(decklist: DeckList, mana_balance: list, identifiers: list, generic: 
     for land_card_id in remaining_ids[:]:
         land_card = get_card(decklist, land_card_id)
         # Find all cases of lands that have a single colour wubrg+c or a(ny)
-        if land_card.get_colours_count() == 3:
+        if land_card.get_total_colours_count() == 3:
             # Attempt to subtract the identity from ManaTarget and return whether it was a success
             result = subtract_from_balance(balance, land_card)
             balance = result[0]
@@ -81,7 +81,7 @@ def success(decklist: DeckList, mana_balance: list, identifiers: list, generic: 
     for land_card_id in remaining_ids[:]:
         land_card = get_card(decklist, land_card_id)
         # Find all cases of lands that have a single colour wubrg+c or a(ny)
-        if land_card.get_colours_count() == 4:
+        if land_card.get_total_colours_count() == 4:
             # Attempt to subtract the identity from ManaTarget and return whether it was a success
             result = subtract_from_balance(balance, land_card)
             balance = result[0]
@@ -95,7 +95,7 @@ def success(decklist: DeckList, mana_balance: list, identifiers: list, generic: 
     for land_card_id in remaining_ids[:]:
         land_card = get_card(decklist, land_card_id)
         # Find all cases of lands that have a single colour wubrg+c or a(ny)
-        if land_card.get_colours_count() == 5:
+        if land_card.get_total_colours_count() == 5:
             # Attempt to subtract the identity from ManaTarget and return whether it was a success
             result = subtract_from_balance(balance, land_card)
             balance = result[0]
@@ -123,7 +123,7 @@ def subtract_from_balance(balance_list: list, land_card: Card) -> tuple:
     Subtracts mana produced by a land card from the balance.
     :param balance_list: A list of previous mana balance.
     :param land_card: A Card object to subtract from the balance.
-    :return: Tuple where first value is the new balance and the second value is boolean for whether subtraction happened.
+    :return: Tuple where first value is the new balance and the second value is True if subtraction happened.
     """
     new_balance = balance_list
 
