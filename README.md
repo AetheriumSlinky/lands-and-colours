@@ -3,9 +3,7 @@ Ever wondered what the probability of you drawing into your colours is?
 # IMPORTANT REGARDING USER-AGENT:
 
 Moxfield has locked their API access to whitelisted user-agents only,
-which means you'll have to request one for yourself. The .exe file has my user-agent
-since it's hidden deep within the program. You are allowed to use that for the time being.
-If you want to test the raw code version, though, you'll need your own.
+which means you'll have to request one for yourself.
 
 The user-agent can be defined in the user_agent.py file.
 
