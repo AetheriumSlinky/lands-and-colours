@@ -16,11 +16,11 @@ def handle_skip_exit(func):
     def wrapper(user_input: str):
         """Wrapper."""
         if not user_input:
-            raise SkipException("No input.")
+            raise SkipException(" > No input.")
         elif user_input.lower() in ['clear', 'skip']:
-            raise SkipException("Clear command was given.")
+            raise SkipException(" > Clear command was given.")
         elif user_input.lower() == 'exit':
-            raise ExitException("Exit command was given.")
+            raise ExitException(" > Exit command was given.")
         else:
             return func(user_input)
     return wrapper
@@ -78,7 +78,6 @@ def custom_mt_query(mana_input: str) -> list:
         else:
             raise SkipException("Erroneous input when defining a custom mana target.")
 
-    print("Mana target processed.")
     return mana_target
 
 
