@@ -7,6 +7,20 @@ from func.moxfield import DeckList
 from func.cardpool import success
 
 
+def probability_simulation(deck_json: dict, target: list) -> dict:
+    """
+    Calls the simulate_probability function. If list of manas has custom settings
+    it calls the function with those parameters.
+    :param deck_json: The deck's JSON file.
+    :param target: List of manas.
+    :return: Default probability if no mana target, override if a custom mana target was provided.
+    """
+    if not sum(target) == 0:
+        return asyncio.run(simulate_probability(iterations=5000, deck_json=deck_json, override_mt=target))
+    return asyncio.run(simulate_probability(iterations=5000, deck_json=deck_json))
+
+
+
 async def simulate_probability(iterations: int, deck_json: dict,
                                account_generic: bool = True, override_mt: list = None) -> dict:
     """
@@ -54,6 +68,19 @@ async def single_probability_iteration(deck_list: DeckList, generic: bool, mana_
     if success(deck_list, mana_target, hand_ids, generic):
         return 1
     return 0
+
+
+def turn_count_simulation(deck_json: dict, target: list) -> dict:
+    """
+    Calls the simulate_turns function. If list of manas has custom settings
+    it calls the function with those parameters.
+    :param deck_json: The deck's JSON file.
+    :param target: List of manas.
+    :return: Default probability if no mana target, override if a custom mana target was provided.
+    """
+    if not sum(target) == 0:
+        return asyncio.run(simulate_turns(iterations=5000, deck_json=deck_json, override_mt=target))
+    return asyncio.run(simulate_turns(iterations=5000, deck_json=deck_json))
 
 
 async def simulate_turns(iterations: int, deck_json: dict,

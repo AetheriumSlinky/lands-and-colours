@@ -22,7 +22,7 @@ def main():
             print(e)
             print(" > Query cleared. Skipping to the beginning.")
             continue
-        except (ExitException, UserAgentError) as e:
+        except (ExitException, UserAgentError, TypeError, ValueError) as e:
             print(e)
             input("   Press enter to exit.")
             break

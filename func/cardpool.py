@@ -1,7 +1,5 @@
 """Describes cards, card pools and their associated functions."""
 
-from copy import deepcopy
-
 from func.moxfield import DeckList, Card
 
 
@@ -25,12 +23,14 @@ def success(decklist: DeckList, mana_balance: list, identifiers: list, generic: 
     :return: True if success, False if not.
     """
     # Copy mana target and override generic mana to 0 if generic flag is set to False
-    balance: list = deepcopy(mana_balance)
+    # balance: list = deepcopy(mana_balance)
+    balance = mana_balance[:]
     if not generic:
         balance[0] = 0
 
     # Copy the list of identifiers from
-    remaining_ids: list = deepcopy(identifiers)
+    # remaining_ids: list = deepcopy(identifiers)
+    remaining_ids = identifiers[:]
 
     # Temporary storage for subtracting from generic mana later
     storage = []

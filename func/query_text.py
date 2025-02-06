@@ -1,65 +1,92 @@
 """Logic functions for queries."""
 
-import asyncio
-
-from func.exceptions import SkipException, ExitException
-from func.moxfield import parse_moxfield_url, moxfield_api_request
-from func.probabilities import simulate_turns, simulate_probability
+from func.exceptions import ExitException, SkipException, InvalidInputError
+from func.moxfield import Moxfield
 
 
-def handle_skip_exit(func):
+def handle_input_exceptions(func):
     """
-    User input exit and clear (skip) handling.
-    :param func: A function that strictly asks for user input with the input() function.
+    Handles 'exit' and 'clear' ('skip') inputs. Throws errors if inputs are not suitable, i.e. not a single string.
+    :param func: A function that strictly takes a string argument with the input() function.
     :return: Function unless input was 'exit', 'clear' or 'skip'.
     """
-    def wrapper(user_input: str):
+    def wrapper(*args, **kwargs):
         """Wrapper."""
-        if not user_input:
-            raise SkipException(" > No input.")
-        elif user_input.lower() in ['clear', 'skip']:
-            raise SkipException(" > Clear command was given.")
-        elif user_input.lower() == 'exit':
-            raise ExitException(" > Exit command was given.")
-        else:
-            return func(user_input)
+        new_arg = ([arg for arg in args if arg is not None]
+                     + [kwarg for kwarg in kwargs.values() if kwarg is not None])
+
+        if len(new_arg) != 1:
+            raise ValueError(
+                f" > Unexpected number of args or kwargs (was {len(new_arg)}, should be 1). "
+                f"The handle_input_exceptions decorator is probably used incorrectly. "
+                f"The input should be a single str. Exiting program."
+            )
+
+        if not isinstance(new_arg[0], str):
+            raise TypeError(
+                f" > Invalid data type (was {type(new_arg[0]).__name__}, should be str). "
+                f"The handle_input_exceptions decorator is probably used incorrectly. "
+                f"The input should be a single str. Exiting program."
+            )
+        new_arg = ''.join(new_arg).lower()
+
+        while True:
+
+            if new_arg in ['clear', 'skip']:
+                raise SkipException(" > Clear command was given.")
+            elif new_arg == 'exit':
+                raise ExitException(" > Exit command was given.")
+            elif not new_arg:
+                print(" > Empty input. Please try again or enter 'skip' or 'exit'.")
+            else:
+                try:
+                    return func(new_arg)
+                except InvalidInputError as e:
+                    print(e)
+
+            new_arg = input(" < Try again:\n   ").lower()
+
     return wrapper
 
 
-@handle_skip_exit
-def json_query(url) -> dict:
+def json_query(moxfield_url_input: str) -> dict:
     """
     Makes the JSON query based on a given Moxfield url.
-    :param url: The url of the deck.
+    :param moxfield_url_input: The url of the deck.
     :return: JSON file.
     """
-    deck_json = moxfield_api_request(parse_moxfield_url(url=url))
+    # Moxfield raises its own errors so no input error handling
+    if moxfield_url_input.lower() == 'exit':
+        raise ExitException(" > Exit command was given.")
+    deck_json = Moxfield(moxfield_url_input).moxfield_json
     return deck_json
 
 
-@handle_skip_exit
-def custom_mt_prompt(text: str) -> bool:
+@handle_input_exceptions
+def valid_custom_mana_target(custom_mana_target_input: str) -> bool:
     """
     Checks if user responded yes.
-    :param text: Input text.
-    :return: True if yes or y, otherwise False.
+    :param custom_mana_target_input: Input text.
+    :return: True if yes or y, False if no or n.
     """
-    if text.lower() in ['yes', 'y']:
+    if custom_mana_target_input.lower() in ['yes', 'y']:
         return True
-    return False
+    elif custom_mana_target_input.lower() in ['no', 'n']:
+        return False
+    else:
+        raise InvalidInputError(" > Input was not 'y' or 'n'. Try again or enter 'skip' or 'exit'.")
 
 
-@handle_skip_exit
-def custom_mt_query(mana_input: str) -> list:
+@handle_input_exceptions
+def parse_custom_mana_target(mana_text_input: str) -> list:
     """
-    Constructs the new ManaTarget for overriding the default one
-    or raises SkipException if an erroneous input was given.
-    :param mana_input: A string that describes the new ManaTarget in terms of '#wubrgc'.
+    Constructs the new mana target for overriding the default one.
+    :param mana_text_input: A string that describes the new mana target in terms of '#wubrgc'.
     :return: New list of manas.
     """
     mana_target = [0, 0, 0, 0, 0, 0, 0]
 
-    for char in mana_input:
+    for char in mana_text_input:
         if char.isnumeric():
             mana_target[0] += int(char)
         elif char.lower() in 'wubrgc':
@@ -76,53 +103,30 @@ def custom_mt_query(mana_input: str) -> list:
             elif char == 'c':
                 mana_target[6] += 1
         else:
-            raise SkipException("Erroneous input when defining a custom mana target.")
-
+            raise InvalidInputError(" > Erroneous input when defining a custom mana target. "
+                                    "Make sure all characters are numbers 1-9 or in 'wubrgca'. "
+                                    "Please try again or enter 'skip' or 'exit'.")
     return mana_target
 
 
-@handle_skip_exit
-def simulation_modes_prompt(mode: str) -> str:
+@handle_input_exceptions
+def simulation_modes(simulation_mode_input: str) -> str:
     """
     Determines the mode of simulation: probability, turns or both based on user input string
     or raises SkipException if some other word was the input.
-    :param mode: User input: probability, turns or both.
+    :param simulation_mode_input: User input: probability, turns or both.
     :return: A single letter: p, t or b.
     """
-    if mode == 'probability':
+    if simulation_mode_input.lower() == 'probability':
         return 'p'
-    elif mode == 'turns':
+    elif simulation_mode_input.lower() == 'turns':
         return 't'
-    elif mode == 'both':
+    elif simulation_mode_input.lower() == 'both':
         return 'b'
     else:
-        raise SkipException("Erroneous input when determining simulation mode(s).")
-
-
-def probability_simulation(deck_json: dict, target: list) -> dict:
-    """
-    Calls the simulate_probability function. If list of manas has custom settings
-    it calls the function with those parameters.
-    :param deck_json: The deck's JSON file.
-    :param target: List of manas.
-    :return: Default probability if no mana target, override if a custom mana target was provided.
-    """
-    if not sum(target) == 0:
-        return asyncio.run(simulate_probability(iterations=1000, deck_json=deck_json, override_mt=target))
-    return asyncio.run(simulate_probability(iterations=1000, deck_json=deck_json))
-
-
-def turn_count_simulation(deck_json: dict, target: list) -> dict:
-    """
-    Calls the simulate_turns function. If list of manas has custom settings
-    it calls the function with those parameters.
-    :param deck_json: The deck's JSON file.
-    :param target: List of manas.
-    :return: Default probability if no mana target, override if a custom mana target was provided.
-    """
-    if not sum(target) == 0:
-        return asyncio.run(simulate_turns(iterations=1000, deck_json=deck_json, override_mt=target))
-    return asyncio.run(simulate_turns(iterations=1000, deck_json=deck_json))
+        raise InvalidInputError(" > Erroneous input when determining simulation mode(s). "
+                                "Make sure the input is 'probability', 'turns' or 'both'. "
+                                "Please try again or enter 'skip' or 'exit'.")
 
 
 def commander_names(names: list) -> str:
