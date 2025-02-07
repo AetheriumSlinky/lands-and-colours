@@ -15,12 +15,20 @@ def query():
 
 
 def moxfield_prompt() -> dict:
+    """
+    Asks for user input on the moxfield link.
+    :return: Deck JSON.
+    """
     moxfield_url_input = input("\n < Moxfield deck link (url):\n   ")
     deck_json = q_text.json_query(moxfield_url_input)
     return deck_json
 
 
 def custom_mana_target_prompt() -> bool:
+    """
+    Asks for user input on whether custom mana target is wanted.
+    :return: True if custom mana target is wanted, False if not.
+    """
     custom_yes_no = input(
         " < Do you want a custom mana target? "
         "Default: commander mana cost is used. 'Y' or 'N'\n   "
@@ -30,6 +38,10 @@ def custom_mana_target_prompt() -> bool:
 
 
 def define_mana_target_prompt() -> list:
+    """
+    Asks for user input on defining the custom mana target.
+    :return: Custom mana target.
+    """
     mana_target = []
     valid = custom_mana_target_prompt()
     if valid:
@@ -44,6 +56,10 @@ def define_mana_target_prompt() -> list:
 
 
 def simulation_mode_prompt() -> str:
+    """
+    Asks for user input on choosing between simulation modes.
+    :return: Mode.
+    """
     mode_input = input(
         " < Do you want to simulate the 'probability' of getting your colours on curve "
         "or the number of 'turns' it takes to get your colours or 'both'?\n   "
@@ -53,6 +69,12 @@ def simulation_mode_prompt() -> str:
 
 
 def simulation(deck_json: dict, mana_target: list, mode: str):
+    """
+    Executes the simulation.
+    :param deck_json: Deck JSON.
+    :param mana_target: Mana target.
+    :param mode: Simulation mode.
+    """
     if mode == 'p':
         p = prob.probability_simulation(deck_json=deck_json, target=mana_target)
         cmdr_txt = q_text.commander_names(p['names'])
