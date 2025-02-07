@@ -13,6 +13,11 @@ class SkipException(Exception):
     """
     pass
 
+class InvalidInputError(Exception):
+    """
+    Used to request for input to the same prompt again.
+    """
+    pass
 
 class MoxfieldError(Exception):
     """
